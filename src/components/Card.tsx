@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-//import { IDCardManager } from '../util/IDCardManager';
-import { ScannedIDCard, IDCardManager } from '../utils/IDCardManager';
+import { useEffect, useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { IDCardManager, ScannedIDCard } from "../utils/IDCardManager";
 
 export interface CardProps {
   cardKey: string;
@@ -53,6 +52,7 @@ export function Card(props: CardProps) {
     </Pressable>
   )
 }
+
 
 const styles = StyleSheet.create({
   card: {

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card } from '../components/Card';
-import { IDCardManager } from '../utils/IDCardManager';
+import { useEffect, useRef, useState } from "react";
+import { View, StyleSheet, ScrollView, Text, Pressable, Modal } from "react-native"
+import { IDCardManager } from "../utils/IDCardManager";
+import { Card } from "../components/Card";
 
 interface HomeScreenProps {
   route: any;
@@ -11,6 +11,7 @@ interface HomeScreenProps {
 export default function HomeScreen(props: HomeScreenProps) {
   const selectedCardKey = useRef("");
   const [cardKeys, setCardKeys] = useState<readonly string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
   useEffect(() => {
     const unsubscribe = props.navigation.addListener('focus', async () => {
       console.log("screen focused");
@@ -20,8 +21,16 @@ export default function HomeScreen(props: HomeScreenProps) {
     return unsubscribe;
   }, [props.navigation]);
 
+  const goToCardScreen = () => {
+    console.log("goToCardScreen");
+    props.navigation.navigate('Card', {
+      cardKey: selectedCardKey.current,
+    });
+  }
+
   const cardPressed = (key: string) => {
     selectedCardKey.current = key;
+    setModalVisible(true);
   }
 
   const renderCards = () => {
@@ -29,7 +38,9 @@ export default function HomeScreen(props: HomeScreenProps) {
     if (cardKeys.length == 0) {
       return;
     }
+    console.log("renderCards");
     cardKeys.forEach(async cardKey => {
+      console.log(cardKey);
       let card = <Card key={cardKey} cardKey={cardKey} onPress={() => cardPressed(cardKey)}></Card>;
       cards.push(card);
     });
@@ -38,11 +49,53 @@ export default function HomeScreen(props: HomeScreenProps) {
     }
   }
 
+  const performAction = async (mode: "delete" | "open") => {
+    if (mode === "delete") {
+      await IDCardManager.deleteIDCard(selectedCardKey.current);
+      setCardKeys(await IDCardManager.getKeys());
+    } else {
+      goToCardScreen();
+    }
+    setModalVisible(!modalVisible);
+  }
+
   return (
     <View style={StyleSheet.absoluteFill}>
       <ScrollView style={styles.cardList}>
         {renderCards()}
       </ScrollView>
+      <View style={[styles.bottomBar, styles.elevation, styles.shadowProp]}>
+        <Pressable onPress={() => { selectedCardKey.current = ""; goToCardScreen() }}>
+          <View style={styles.circle}>
+            <Text style={styles.buttonText}>SCAN</Text>
+          </View>
+        </Pressable>
+      </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Please select an action:</Text>
+            <View style={{ flexDirection: "row" }}>
+              <Pressable
+                style={styles.button}
+                onPress={() => performAction("open")}>
+                <Text style={styles.textStyle}>Open</Text>
+              </Pressable>
+              <Pressable
+                style={styles.button}
+                onPress={() => performAction("delete")}>
+                <Text style={styles.textStyle}>Delete</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
